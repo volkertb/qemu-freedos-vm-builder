@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
+# Copyright 2022 Volkert de Buisonjé
 
 BUILD_DIR=./build
 DOWNLOAD_DIR=./download
