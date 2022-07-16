@@ -15,6 +15,10 @@ FD_DOWNLOAD_PATH=$DOWNLOAD_DIR/$FD_ZIP_FILE
 QEMU_MONITOR_LOCAL_PORT=10789
 VM_DESIRED_IMAGE_SIZE=100M
 
+# Workaround for Debian and Ubuntu systems
+# With thanks to https://bugzilla.redhat.com/show_bug.cgi?id=754702#c7
+if nc -q 2>&1 | grep "requires an argument" >/dev/null; then alias nc="nc -q 0"; fi
+
 wait_until_text_mode_shows_string() {
   string_to_wait_for=$1
   number_of_retries=$2
