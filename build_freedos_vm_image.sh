@@ -69,7 +69,6 @@ mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 rm -rf ./*
 unzip ../$FD_DOWNLOAD_PATH
-qemu-img convert -p -f vmdk -O qcow2 FD13LITE.vmdk FD13LITE.qcow2
 qemu-img create -f qcow2 freedos.qcow2 $VM_DESIRED_IMAGE_SIZE
 qemu-system-i386 \
   -enable-kvm \
@@ -78,6 +77,9 @@ qemu-system-i386 \
   -drive aio=io_uring,if=virtio,format=qcow2,file=freedos.qcow2 \
   -drive if=none,id=drive-ide0-0-0,readonly=on \
   -monitor tcp:localhost:$QEMU_MONITOR_LOCAL_PORT,server,nowait &
+
+qemu_pid=$!
+echo "QEMU launched, PID: $qemu_pid"
 
 echo Waiting for QEMU instance to spin up
 # With thanks to https://stackoverflow.com/a/27601038
@@ -181,17 +183,24 @@ echo sendkey t | nc localhost $QEMU_MONITOR_LOCAL_PORT # halT
 echo sendkey ret | nc localhost $QEMU_MONITOR_LOCAL_PORT
 
 echo Wait for the installation VM to spin down
-sleep 10s
 
-echo FreeDOS VM created. Spinning it up, to you can try it out.
+while kill -0 $qemu_pid >/dev/null 2>&1; do
+  echo "Waiting for QEMU process to end.."
+  sleep 1
+done
+
+echo "FreeDOS VM created. Spinning it up, to you can try it out. Enter the command \"halt\" to shut it down."
 qemu-system-i386 \
   -enable-kvm \
   -machine pc \
   -drive aio=io_uring,if=virtio,format=qcow2,file=freedos.qcow2 \
-  -drive if=none,id=drive-ide0-0-0,readonly=on
+  -drive if=none,id=drive-ide0-0-0,readonly=on &
 
-echo Done.
+rm FD13LITE.*
+rm readme.txt
+
+rm /tmp/videodumpbuffer
 
 cd ..
 
-rm /tmp/videodumpbuffer
+echo "Creation job completed. Have fun! :)"
