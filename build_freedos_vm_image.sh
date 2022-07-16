@@ -1,10 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2022 Volkert de Buisonjé
-#
-# NOTE: If you're running this on something other than Linux, or you don't have KVM available in your Linux environment,
-#       you'll need to remove the parameter `-enable-kvm` from the `qemu-system-i386` commands.
-#
 
 BUILD_DIR=./build
 DOWNLOAD_DIR=./download
@@ -18,6 +14,13 @@ VM_DESIRED_IMAGE_SIZE=100M
 # Workaround for Debian and Ubuntu systems
 # With thanks to https://bugzilla.redhat.com/show_bug.cgi?id=754702#c7
 if nc -q 2>&1 | grep "requires an argument" >/dev/null; then alias nc="nc -q 0"; fi
+
+# Enable KVM only on Linux systems that support it
+grep -E '^flags.*(vmx|svm)' /proc/cpuinfo >/dev/null 2>&1 && alias qemu-system-i386="qemu-system-i386 -enable-kvm"
+
+# Enable io_uring only on Linux systems that support it
+# With thanks to https://unix.stackexchange.com/a/596284
+if grep io_uring_setup /proc/kallsyms >/dev/null 2>&1; then aio_override_prefix="aio=io_uring,"; else aio_override_prefix=""; fi
 
 wait_until_text_mode_shows_string() {
   string_to_wait_for=$1
@@ -71,10 +74,9 @@ rm -rf ./*
 unzip ../$FD_DOWNLOAD_PATH
 qemu-img create -f qcow2 freedos.qcow2 $VM_DESIRED_IMAGE_SIZE
 qemu-system-i386 \
-  -enable-kvm \
   -machine pc \
-  -drive aio=io_uring,if=virtio,format=raw,file=FD13LITE.img \
-  -drive aio=io_uring,if=virtio,format=qcow2,file=freedos.qcow2 \
+  -drive "${aio_override_prefix}"if=virtio,format=raw,file=FD13LITE.img \
+  -drive "${aio_override_prefix}"if=virtio,format=qcow2,file=freedos.qcow2 \
   -drive if=none,id=drive-ide0-0-0,readonly=on \
   -monitor tcp:localhost:$QEMU_MONITOR_LOCAL_PORT,server,nowait &
 
@@ -191,9 +193,8 @@ done
 
 echo "FreeDOS VM created. Spinning it up, to you can try it out. Enter the command \"halt\" to shut it down."
 qemu-system-i386 \
-  -enable-kvm \
   -machine pc \
-  -drive aio=io_uring,if=virtio,format=qcow2,file=freedos.qcow2 \
+  -drive "${aio_override_prefix}"if=virtio,format=qcow2,file=freedos.qcow2 \
   -drive if=none,id=drive-ide0-0-0,readonly=on &
 
 rm FD13LITE.*
