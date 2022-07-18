@@ -11,6 +11,23 @@ FD_DOWNLOAD_PATH=$DOWNLOAD_DIR/$FD_ZIP_FILE
 QEMU_MONITOR_LOCAL_PORT=10789
 VM_DESIRED_IMAGE_SIZE=100M
 
+command -v nc >/dev/null || {
+  echo 'nc not found, make sure you have netcat installed.'
+  exit 1
+}
+command -v wget >/dev/null || {
+  echo 'wget not found, make sure you have it installed.'
+  exit 1
+}
+command -v qemu-img >/dev/null || {
+  echo 'qemu-img not found, make sure you have QEMU installed.'
+  exit 1
+}
+command -v qemu-system-i386 >/dev/null || {
+  echo 'qemu-system-i386 not found, make sure you have QEMU installed.'
+  exit 1
+}
+
 # Workaround for Debian and Ubuntu systems
 # With thanks to https://bugzilla.redhat.com/show_bug.cgi?id=754702#c7
 if nc -q 2>&1 | grep "requires an argument" >/dev/null; then alias nc="nc -q 0"; fi
