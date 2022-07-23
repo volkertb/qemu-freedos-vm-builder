@@ -32,8 +32,13 @@ command -v qemu-system-i386 >/dev/null || {
 # With thanks to https://bugzilla.redhat.com/show_bug.cgi?id=754702#c7
 if nc -q 2>&1 | grep "requires an argument" >/dev/null; then alias nc="nc -q 0"; fi
 
+qemu_accelerator=tcg
+
 # Enable KVM only on Linux systems that support it
-grep -E '^flags.*(vmx|svm)' /proc/cpuinfo >/dev/null 2>&1 && alias qemu-system-i386="qemu-system-i386 -enable-kvm"
+grep -E '^flags.*(vmx|svm)' /proc/cpuinfo >/dev/null 2>&1 && qemu_accelerator=kvm
+
+# Enable HVF only on macOS systems that support it
+sysctl kern.hv_support | grep "kern.hv_support: 1" >/dev/null 2>&1 && qemu_accelerator=hvf
 
 # Enable io_uring only on Linux systems that support it
 # With thanks to https://unix.stackexchange.com/a/596284
@@ -90,7 +95,9 @@ cd $BUILD_DIR
 rm -rf ./*
 unzip ../$FD_DOWNLOAD_PATH
 qemu-img create -f qcow2 freedos.qcow2 $VM_DESIRED_IMAGE_SIZE
+echo "QEMU accelerator to be used: $qemu_accelerator"
 qemu-system-i386 \
+  -accel $qemu_accelerator \
   -machine pc \
   -drive "${aio_override_prefix}"if=virtio,format=raw,file=FD13LITE.img \
   -drive "${aio_override_prefix}"if=virtio,format=qcow2,file=freedos.qcow2 \
