@@ -80,7 +80,7 @@ mkdir -p $DOWNLOAD_DIR
 
 [ -f "$FD_DOWNLOAD_PATH" ] || (echo "$FD_DOWNLOAD_PATH not found, downloading it." && wget -P $DOWNLOAD_DIR $FD_DOWNLOAD_URL)
 
-sha256sum $FD_DOWNLOAD_PATH | cut -d ' ' -f 1 | grep -xq "^$FD_ZIP_FILE_SHA256$"
+shasum -a 256 $FD_DOWNLOAD_PATH | cut -d ' ' -f 1 | grep -xq "^$FD_ZIP_FILE_SHA256$"
 if test $? -eq 0; then
   echo "Checksum OK"
 else
@@ -186,6 +186,8 @@ sleep 1s
 
 echo ENTER FOR "Yes - Please install FreeDOS"
 echo sendkey ret | nc localhost $QEMU_MONITOR_LOCAL_PORT
+
+wait_until_text_mode_shows_string "10%" 30 5
 
 echo Waiting for all files to be copied
 wait_until_text_mode_shows_string "Do you want to reboot now?" 30 5
